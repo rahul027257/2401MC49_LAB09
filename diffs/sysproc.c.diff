@@ -1,0 +1,31 @@
+diff --git a/kernel/sysproc.c b/kernel/sysproc.c
+index cd25557..b15fa63 100644
+--- a/kernel/sysproc.c
++++ b/kernel/sysproc.c
+@@ -47,7 +47,7 @@ sys_sbrk(void)
+   argint(1, &t);
+   addr = myproc()->sz;
+ 
+-  if (t == SBRK_EAGER || n < 0) {
++  if (n < 0) {   // A9-Q2: n>0 is ALWAYS lazy now
+     if (growproc(n) < 0) {
+       return -1;
+     }
+@@ -110,3 +110,17 @@ sys_uptime(void)
+   release(&tickslock);
+   return xticks;
+ }
++
++// ---- A9-Q1: vmprint syscall ----
++uint64
++sys_vmprint(void)
++{
++  return vmprint();
++}
++
++// ---- A9-Q2: getfaults syscall ----
++uint64
++sys_getfaults(void)
++{
++  return myproc()->page_fault_count;
++}

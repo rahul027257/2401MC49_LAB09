@@ -1,0 +1,49 @@
+diff --git a/kernel/vm.c b/kernel/vm.c
+index f50650b..02115ce 100644
+--- a/kernel/vm.c
++++ b/kernel/vm.c
+@@ -489,3 +489,44 @@ ismapped(pagetable_t pagetable, uint64 va)
+   }
+   return 0;
+ }
++
++// ---------- A9-Q1: print page table of calling process ----------
++void
++vmprint_walk(pagetable_t pt, int level, uint64 va_prefix,
++             int *user_pages, int *pt_pages)
++{
++  for(int i = 0; i < 512; i++){
++    pte_t pte = pt[i];
++    if((pte & PTE_V) == 0)
++      continue;
++    uint64 child_pa = PTE2PA(pte);
++    if(level == 0){
++      // leaf – only print if it is a USER page
++      if(pte & PTE_U){
++        uint64 va = va_prefix | ((uint64)i << 12);
++        printk("  VA 0x%lx -> PA 0x%lx  [P=1 W=%d U=1]\n",
++               va, child_pa, (pte & PTE_W) ? 1 : 0);
++        (*user_pages)++;
++      }
++    } else {
++      // non-leaf: another page-table page
++      (*pt_pages)++;
++      uint64 pfx = va_prefix | ((uint64)i << (12 + 9*level));
++      vmprint_walk((pagetable_t)child_pa, level-1, pfx,
++                   user_pages, pt_pages);
++    }
++  }
++}
++
++int
++vmprint(void)
++{
++  struct proc *p = myproc();
++  int user_pages = 0;
++  int pt_pages   = 1;          // root page-table page always exists
++  printk("Page table of pid %d  (sz = 0x%lx):\n", p->pid, p->sz);
++  vmprint_walk(p->pagetable, 2, 0, &user_pages, &pt_pages);
++  printk("Total valid user pages : %d\n", user_pages);
++  printk("Page-table pages used  : %d\n", pt_pages);
++  return 0;
++}

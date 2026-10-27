@@ -1,0 +1,24 @@
+diff --git a/kernel/proc.c b/kernel/proc.c
+index 31f23a3..c845403 100644
+--- a/kernel/proc.c
++++ b/kernel/proc.c
+@@ -124,6 +124,7 @@ allocproc(void)
+ found:
+   p->pid = allocpid();
+   p->state = USED;
++  p->page_fault_count = 0;   // A9-Q2
+ 
+   // Allocate a trapframe page.
+   if ((p->trapframe = (struct trapframe *)kalloc()) == 0) {
+diff --git a/kernel/proc.h b/kernel/proc.h
+index 5603697..96d68b0 100644
+--- a/kernel/proc.h
++++ b/kernel/proc.h
+@@ -80,6 +80,7 @@ enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+ 
+ // Per-process state
+ struct proc {
++  int page_fault_count;      // A9-Q2: lazy-alloc fault counter
+   struct spinlock lock;
+ 
+   // p->lock must be held when using these:
